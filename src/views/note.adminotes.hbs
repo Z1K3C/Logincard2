@@ -1,0 +1,23 @@
+<table class="table table-secondary mt-4">
+  <thead>
+    <tr>
+      <th scope="col">Title</th>
+      <th scope="col">Comment</th>
+      <th scope="col">Date</th>
+      <th scope="col">By</th>
+      <th scope="col">Edit</th>
+    </tr>
+  </thead>
+  <tbody>
+      {{#each notes}}
+        <tr>
+          <th>{{ title }}</th>
+          <th>{{ description }} </th>
+          <th>{{ date }}</th>
+          <th>{{ user }}</th>
+          <th><a href="/adminedit/{{_id}}"><i class="fas fa-edit"></i></a></th>
+        </tr>
+      {{/each}}
+    </tr>
+  </tbody>
+</table>

@@ -4,8 +4,8 @@ const flash = require('connect-flash');                 //Solicito a connect fla
 const session = require('express-session');             //Solicito el session para manejar sesiones
 const methodOverride = require('method-override');      //Solicito override para poder usar los metodos GET/POST/PUT//DELETE
 const passport = require('passport');                   //Solicito a passport de manera completa
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');                       //Solicito a multer para poder almacenar imagenes
+const { v4: uuidv4 } = require('uuid');                 //Solicito a uuidv4 para poder generar id para las imagenes
 const Handlebars = require('handlebars');               //Solicito a handlerbars para manejar plantillas html/js
 const exphbs  = require('express-handlebars');          //Solicito a express handlebars para poder usarlo desde el servidor
 const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access');   //Solicito este modulo para cuando renderice el .hbs pueda leer datos
@@ -31,7 +31,7 @@ app.engine('.hbs', exphbs({                             //Inicializo el motor de
 app.set('view engine', '.hbs');                        //Inicializo el motor de plantillas en .hbs
 
 //middleware
-app.use(express.json());                               
+app.use(express.json());                              //Esto es para poder usar formatos tipo json
 app.use(express.urlencoded({extended: false}));       //A travez de este middleware puedo leer datos en los metodos GET/POST/PUT/DEL
 app.use(methodOverride('_method'));                   //A travez de este middleware puedo usar los metodos GET/POST/PUT/DEL
 app.use(session({                                     //Inicializo el modulo sessions para poder guardar datos entre secicones
@@ -42,14 +42,14 @@ app.use(session({                                     //Inicializo el modulo ses
 app.use(passport.initialize());                       //Inicializo a passport
 app.use(passport.session());                          //le indico a passport que utilizare seciones
 app.use(flash());                                     //A travez de este middleware puedo usar variables globales y compartirlas entre plantillas/seciones
-const storage = multer.diskStorage({
-    destination: path.join(__dirname, 'public/img/'),
+const storage = multer.diskStorage({                  //utilizo la propiedad diskstorage de multer para indicarle ruta y nombre de los
+    destination: path.join(__dirname, 'public/img/'), //archivos que seleccionara el usuario a travez de la interfaz
     filename: (req, file, cb, filename) => {
         //console.log(file);
         cb(null, uuidv4() + path.extname(file.originalname));
     }
 }) 
-app.use(multer({storage}).single('image'));
+app.use(multer({storage}).single('image'));          //A travez de; servidor utilizare a multer para solo imagenes
 
 // Global Variables
 app.use((req, res, next) => {                         //Al utilizar flash desde routes este lo redireccionara a las variables locales

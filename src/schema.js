@@ -8,7 +8,7 @@ const NoteSchema = new Schema(                            //Creo una tabla de no
     title: {  type: String,  required: true },            //Creo una columna llamada title de tipo string
     description: {  type: String, required: true  },      //Creo una columna llamada description
     user: { type: String, required: true},                //Creo una columna llamada user
-    filename: {type: String},
+    filename: {type: String},                             //Agrego columnas correspondientes a las porpiedades de la imagen
     path: {type: String},
     originalname: {type: String},
     mimetype: {type: String},

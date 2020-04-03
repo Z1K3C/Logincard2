@@ -2,8 +2,8 @@ const express = require("express");                       //Mando llamar a expre
 const router = express.Router();                          //Utilizo el motodo router de express
 const passport = require('passport');                     //Mando llamar a passport completo
 const moment = require('moment');                         //Mando a llamar a moment para poder dar formato a la fecha
-const path = require('path');
-const { remove } = require('fs-extra');
+const path = require('path');                             //Agrego el modulo path para un mejor manejo de rutas
+const { remove } = require('fs-extra');                   //Agrego solo el modulo remove de fs extra para poder eliminar archivos
 const { Note, User } = require("../schema.js");           //De schema mando a utilizar los schemas Note y User
 const { isAuthenticated } = require("./auth.js");         //Mando a llamar el metodo que verifica si esta authentificado
 
@@ -24,17 +24,17 @@ router.get("/add", isAuthenticated, function(req,res) {   //Cuando el usuario ac
 });
 
 router.post("/newnote", isAuthenticated, async function (req,res) {        //Cuando el usuario sea enviado a newnote desde el motodo POST
-  let errors = [];  
-  let file = req.file;
-  let imageok;
+  let errors = [];                                        //Inicializo un arreglo vacio
+  let file = req.file;                                    //Capturo lo que existe en file, dicha variable req.file se obtiene por el metodo de multer y por la propiedad agregada al formulario de enctype="multipart/form-data"
+  let imageok;                                            //Declaro una variable image
   const { title, description } = req.body;                //tomara los datos del body de donde fue enviado
-  if(file != undefined){
-    imageok = file.mimetype;
-    imageok = imageok.slice(0,5)
-    if(imageok != 'image')
-      errors.push({ text: "Please select a Image" });
+  if(file != undefined){                                  //Si el usuario capturo un dato
+    imageok = file.mimetype;                              //ALmacena el tipo de archivo en imageok
+    imageok = imageok.slice(0,5)                          //Extraigo el string image
+    if(imageok != 'image')                                
+      errors.push({ text: "Please select a Image" });     //Si no es una imagen mando a imprimir el error
   }else
-    errors.push({ text: "Please select a Image" });
+    errors.push({ text: "Please select a Image" });       //So el usuario no seleccion una imagen mando el error
   if (!title) {                                           //Si el usuario no escribio un titulo agrega este mensaje al array
     errors.push({ text: "Please Write a Title." });
   }
@@ -50,11 +50,11 @@ router.post("/newnote", isAuthenticated, async function (req,res) {        //Cua
   }else {
     let newNote = new Note({ title, description });       //En dado caso que el usuario si alla llenado el formulario OK inicializa un nueva schema y guardalo en newnote ya con los datos de title y description 
     newNote.user = req.user.id;                           //Asigno el valor del usuario logeado
-    newNote.filename = file.filename;
-    newNote.path = path.join(__dirname, 'public/img/'),
-    newNote.originalname = file.originalname;
-    newNote.mimetype = file.mimetype;
-    newNote.size = file.size;    
+    newNote.filename = file.filename;                     //Almaceno el nomnre del archivo generado por el backend bajo la nomenclatura uuid
+    newNote.path = path.join(__dirname, '../public/img/'),   //Almaceno la ruta de la imagen
+    newNote.originalname = file.originalname;             //Almaceno el nombre original de la imagen
+    newNote.mimetype = file.mimetype;                     //Almaceno el tipo de archivo
+    newNote.size = file.size;                             //Almaceno el tamano del archivo
     await newNote.save();                                 //Guarda este nuevo schema en la base de datos
     req.flash("success_msg", "Note Added Successfully");  //Utilizando flash lo mando a las var globals para que posteriormente renderice con partials el mensaje correspondiente
     const admin = req.user.level || '';                   //Pregunto el nivel del usuario logeado, si no tiene le asigno nada a admin
@@ -85,47 +85,35 @@ router.get("/edit/:id", isAuthenticated, async (req, res) => {  //Si el usuario 
 
 router.put("/editnote/:id", isAuthenticated, async function(req,res) {     //Si el usuario pulsa el boton de guardar del formulario anterior este realizara lo sifuiente:
   const { title, description } = req.body;                //Guardara el title y el description obtenidos a travez de body
-  const user = req.user.id; 
-  const date = moment().format();
-  let errors = [];  
-  let file = req.file;
-  let Selnewimage = false;
-  let imageok ;
-  if(file != undefined){
-    Selnewimage = true;
-    imageok = file.mimetype.toString();
-    imageok = imageok.slice(0,5);
-    if(imageok != 'image')
+  const user = req.user.id;                               //Solicito el id del usuario
+  const date = moment().format();                         //Soliciro la fecha actual
+  let errors = [];                                        //Inicializo un arreglo vacio
+  let file = req.file;                                    //Alamceno el arreglo file 
+  let Selnewimage = false;                                //Inicializo una variable
+  let imageok ;                                           //Inicializo una variable
+  if(file != undefined){                                  //Si no hay imagen seleccionada
+    Selnewimage = true;                                   //Le indico que se selecciono una imagen
+    imageok = file.mimetype.toString();                   //Convierto el dato a string
+    imageok = imageok.slice(0,5);                         //Capturo el valor de la imagen
+    if(imageok != 'image')                                //En caso de que no sea imagen imprimo el error
       errors.push({ text: "Please select a Image valid" });
   }
   if (errors.length > 0)                                 //Si hay mas de un error
-    res.redirect("/edit/" + req.params.id); 
+    res.redirect("/edit/" + req.params.id);               //En caso de que sea un error redirecciono a la misma ruta
   else{
 
-    if(Selnewimage){
+    if(Selnewimage){                                      //Si el usuario selecciono una nueva imagen
+      const imaged = await Note.findById(req.params.id);  //Capturo la nota
+      await remove(path.resolve('./src/public/img/' + imaged.filename));  //En base a la ruta de la  imagen borro la imagen
 
-      /*
-      using unlink module of fs-extra@v7.0.1
-      var imaged = await Note.findById(req.params.id);
-      try {
-        const pathd = path.resolve('./src/public/img/' + imaged.filename);
-        console.log(imaged);
-        await fsextra.unlink(pathd);
-      } catch (error) {
-        console.log(error);
-      }
-      */
-      const imaged = await Note.findById(req.params.id);
-      await remove(path.resolve('./src/public/img/' + imaged.filename));
-
-      const filename = file.filename;
+      const filename = file.filename;                     //Capturo los datos de la nueva imagen
       const mypath = path.join(__dirname, 'public/img/');
       const originalname = file.originalname;
       const mimetype = file.mimetype;
       const size = file.size;   
-
+      //Capturado todos los datos los actualizo en la base de datos
       await Note.findByIdAndUpdate(req.params.id, { title, description, user, filename, mypath, originalname, mimetype, size, date });
-    }else
+    }else   //En caso de que no se halla seleccionado nueva imagen solo actualizo los datos de la nota
       await Note.findByIdAndUpdate(req.params.id, { title, description, user, date });
     //await Note.findByIdAndUpdate(req.params.id, { title, description, date });  //Realiza un update de la fila con el id
     req.flash("success_msg", "Note Updated Successfully");  //Utilizando flash lo mando a las var globals para que posteriormente renderice con partials el mensaje correspondiente
@@ -140,7 +128,7 @@ router.put("/editnote/:id", isAuthenticated, async function(req,res) {     //Si 
 
 router.delete("/delete/:id", isAuthenticated, async (req, res) => {       //Si el usuario pulsa el boton de eliminar del formulario de all notes
   const datad = await Note.findByIdAndDelete(req.params.id);            //Realizo una consulta del tipo eleminiar a la base de datos a traves de la fila con id de numero tal
-  await remove(path.resolve('./src/public/img/' + datad.filename));
+  await remove(path.resolve('./src/public/img/' + datad.filename));   //Del dato eliminado tomo la ruta de la imagen para eliminarla
 
   req.flash("success_msg", "Note Deleted Successfully");  //Utilizando flash lo mando a las var globals para que posteriormente renderice con partials el mensaje correspondiente 
   const admin = req.user.level || '';                   //Pregunto el nivel del usuario logeado, si no tiene le asigno nada a admin
